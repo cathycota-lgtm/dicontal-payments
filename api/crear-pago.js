@@ -8,23 +8,36 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const { items } = req.body;
+  try {
 
-  const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.MP_ACCESS_TOKEN}`
-    },
-    body: JSON.stringify({
-      items: items
-    })
-  });
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const { items } = body;
 
-  const data = await response.json();
+    const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.MP_ACCESS_TOKEN}`
+      },
+      body: JSON.stringify({
+        items: items
+      })
+    });
 
-  res.status(200).json({
-    link: data.init_point
-  });
+    const data = await response.json();
+
+    res.status(200).json({
+      link: data.init_point
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: "Error creando pago"
+    });
+
+  }
 
 }
