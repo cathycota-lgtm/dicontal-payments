@@ -1,5 +1,13 @@
 export default async function handler(req, res) {
 
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   const { items } = req.body;
 
   const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
@@ -9,12 +17,7 @@ export default async function handler(req, res) {
       "Authorization": `Bearer ${process.env.MP_ACCESS_TOKEN}`
     },
     body: JSON.stringify({
-      items: items,
-      back_urls: {
-        success: "https://dicontal.cl/pago-exitoso",
-        failure: "https://dicontal.cl/pago-error",
-        pending: "https://dicontal.cl/pago-pendiente"
-      }
+      items: items
     })
   });
 
