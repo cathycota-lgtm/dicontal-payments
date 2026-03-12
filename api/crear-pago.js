@@ -11,17 +11,30 @@ export default async function handler(req, res) {
   try {
 
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    const { items } = body;
+    const { items, cliente } = body;
 
+    let descripcionCliente = "";
+
+if (cliente) {
+  descripcionCliente = `
+Cliente: ${cliente.nombre}
+Teléfono: ${cliente.telefono}
+Dirección: ${cliente.direccion}
+Observaciones: ${cliente.observaciones}
+`;
+}
     const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.MP_ACCESS_TOKEN}`
       },
-      body: JSON.stringify({
-        items: items
-      })
+     body: JSON.stringify({
+  items: items.map(item => ({
+    ...item,
+    description: descripcionCliente
+  }))
+})
     });
 
     const data = await response.json();
