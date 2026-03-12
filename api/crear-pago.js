@@ -23,34 +23,26 @@ Dirección: ${cliente.direccion}
 Observaciones: ${cliente.observaciones}
 `;
 }
-    const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.MP_ACCESS_TOKEN}`
-      },
-     body: JSON.stringify({
-  items: items.map(item => ({
-    ...item,
-    description: descripcionCliente
-  }))
-})
-    });
-
-    const data = await response.json();
-
-    res.status(200).json({
-      link: data.init_point
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      error: "Error creando pago"
-    });
-
-  }
-
-}
+   const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${process.env.MP_ACCESS_TOKEN}`
+  },
+  body: JSON.stringify({
+    items: items.map(item => ({
+      ...item,
+      description: descripcionCliente
+    })),
+    payer: {
+      name: cliente?.nombre,
+      email: cliente?.email
+    },
+    metadata: {
+      nombre: cliente?.nombre,
+      telefono: cliente?.telefono,
+      direccion: cliente?.direccion,
+      observaciones: cliente?.observaciones
+    }
+  })
+});
