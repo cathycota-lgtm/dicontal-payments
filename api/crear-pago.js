@@ -1,3 +1,6 @@
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 module.exports = async function handler(req, res) {
 
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -11,7 +14,7 @@ module.exports = async function handler(req, res) {
   try {
 
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    const { items } = body;
+   const { items, nombre, email, telefono, comuna, direccion } = body;
 
     const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -25,6 +28,22 @@ module.exports = async function handler(req, res) {
     });
 
     const data = await response.json();
+    await resend.emails.send({
+  from: "onboarding@resend.dev",
+  to: "ccorrea@dicontal.cl",
+  subject: "Nuevo pedido web",
+  html: `
+    <h2>Nuevo pedido</h2>
+    <p><strong>Nombre:</strong> ${nombre}</p>
+    <p><strong>Email:</strong> ${email}</p>
+    <p><strong>Teléfono:</strong> ${telefono}</p>
+    <p><strong>Comuna:</strong> ${comuna}</p>
+    <p><strong>Dirección:</strong> ${direccion}</p>
+    <hr>
+    <p><strong>Detalle:</strong> ${items[0]?.title}</p>
+    <p><strong>Total:</strong> $${items[0]?.unit_price}</p>
+  `
+});
 
     res.status(200).json({
   init_point: data.init_point
