@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
         },
         body: JSON.stringify({
           from: "onboarding@resend.dev",
-          to: "ccorrea@dicontal.cl",
+          to: "cathycota@gmail.com",
           subject: "Nuevo pedido web",
           html: `
             <h2>Nuevo pedido</h2>
