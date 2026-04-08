@@ -41,17 +41,32 @@ module.exports = async function handler(req, res) {
           from: "onboarding@resend.dev",
           to: "cathycota@gmail.com",
           subject: "Nuevo pedido web",
-          html: `
-            <h2>Nuevo pedido</h2>
-            <p><strong>Nombre:</strong> ${nombre}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Teléfono:</strong> ${telefono}</p>
-            <p><strong>Comuna:</strong> ${comuna}</p>
-            <p><strong>Dirección:</strong> ${direccion}</p>
-            <hr>
-            <p><strong>Detalle:</strong> ${items[0]?.title}</p>
-            <p><strong>Total:</strong> $${items[0]?.unit_price}</p>
-          `
+        html: `
+  <h2>Nuevo pedido</h2>
+
+  <p><strong>Nombre:</strong> ${nombre}</p>
+  <p><strong>Email:</strong> ${email}</p>
+  <p><strong>Teléfono:</strong> ${telefono}</p>
+  <p><strong>Comuna:</strong> ${comuna}</p>
+  <p><strong>Dirección:</strong> ${direccion}</p>
+
+  <hr>
+
+  <p><strong>Tipo documento:</strong> ${tipo_documento || "boleta"}</p>
+
+  ${tipo_documento === "factura" ? `
+    <h3>Datos de facturación</h3>
+    <p><strong>Razón social:</strong> ${razon_social}</p>
+    <p><strong>RUT:</strong> ${rut}</p>
+    <p><strong>Giro:</strong> ${giro}</p>
+    <p><strong>Dirección empresa:</strong> ${direccion_empresa}</p>
+  ` : ""}
+
+  <hr>
+
+  <p><strong>Detalle:</strong> ${items[0]?.title}</p>
+  <p><strong>Total:</strong> $${items[0]?.unit_price}</p>
+`
         })
       });
 
