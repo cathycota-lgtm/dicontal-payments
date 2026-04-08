@@ -11,7 +11,19 @@ module.exports = async function handler(req, res) {
   try {
 
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    const { items, nombre, email, telefono, comuna, direccion } = body;
+    const {
+  items,
+  nombre,
+  email,
+  telefono,
+  comuna,
+  direccion,
+  tipo_documento,
+  razon_social,
+  rut,
+  giro,
+  direccion_empresa
+} = body;
 
     // 🔹 Crear pago en Mercado Pago
     const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
