@@ -11,19 +11,21 @@ module.exports = async function handler(req, res) {
   try {
 
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+
     const {
-  items,
-  nombre,
-  email,
-  telefono,
-  comuna,
-  direccion,
-  tipo_documento,
-  razon_social,
-  rut,
-  giro,
-  direccion_empresa
-} = body;
+      items,
+      nombre,
+      email,
+      telefono,
+      comuna,
+      direccion,
+      tipo_documento,
+      tipo_entrega, // 👈 agregado
+      razon_social,
+      rut,
+      giro,
+      direccion_empresa
+    } = body;
 
     // 🔹 Crear pago en Mercado Pago
     const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
@@ -39,7 +41,10 @@ module.exports = async function handler(req, res) {
 
     const data = await response.json();
 
-    // 🔹 Enviar email (NO rompe el flujo si falla)
+    // 🔹 Armar detalle (soporta múltiples productos)
+    const detalle = items?.map(i => `${i.title} x ${i.quantity}`).join("<br>") || "Sin detalle";
+
+    // 🔹 Enviar email
     console.log("📩 intentando enviar email...");
 
     try {
@@ -53,43 +58,50 @@ module.exports = async function handler(req, res) {
           from: "onboarding@resend.dev",
           to: "cathycota@gmail.com",
           subject: "Nuevo pedido web",
-        html: `
-  <h2>Nuevo pedido</h2>
+          html: `
+            <h2>Nuevo pedido</h2>
 
-  <p><strong>Nombre:</strong> ${nombre}</p>
-  <p><strong>Email:</strong> ${email}</p>
-  <p><strong>Teléfono:</strong> ${telefono}</p>
-  <p><strong>Comuna:</strong> ${comuna}</p>
-  <p><strong>Dirección:</strong> ${direccion}</p>
+            <p><strong>Nombre:</strong> ${nombre}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Teléfono:</strong> ${telefono}</p>
+            <p><strong>Comuna:</strong> ${comuna}</p>
+            <p><strong>Dirección:</strong> ${direccion}</p>
 
-  <hr>
+            <p><strong>Entrega:</strong> ${tipo_entrega || "No especificado"}</p>
 
-  <p><strong>Tipo documento:</strong> ${tipo_documento || "boleta"}</p>
+            <hr>
 
-  ${tipo_documento === "factura" ? `
-    <h3>Datos de facturación</h3>
-    <p><strong>Razón social:</strong> ${razon_social}</p>
-    <p><strong>RUT:</strong> ${rut}</p>
-    <p><strong>Giro:</strong> ${giro}</p>
-    <p><strong>Dirección empresa:</strong> ${direccion_empresa}</p>
-  ` : ""}
+            <p><strong>Tipo documento:</strong> ${tipo_documento || "boleta"}</p>
 
-  <hr>
+            ${tipo_documento === "factura" ? `
+              <h3>Datos de facturación</h3>
+              <p><strong>Razón social:</strong> ${razon_social}</p>
+              <p><strong>RUT:</strong> ${rut}</p>
+              <p><strong>Giro:</strong> ${giro}</p>
+              <p><strong>Dirección empresa:</strong> ${direccion_empresa}</p>
+            ` : ""}
 
-  <p><strong>Detalle:</strong> ${items[0]?.title}</p>
-  <p><strong>Total:</strong> $${items[0]?.unit_price}</p>
-`
+            <hr>
+
+            <p><strong>Detalle:</strong><br>${detalle}</p>
+            <p><strong>Total:</strong> $${items[0]?.unit_price}</p>
+          `
         })
       });
 
       const emailData = await emailRes.text();
+
+      if (!emailRes.ok) {
+        console.error("❌ Resend error:", emailData);
+      }
+
       console.log("📩 respuesta resend:", emailData);
 
     } catch (err) {
       console.error("❌ error enviando email:", err);
     }
 
-    // 🔹 Responder al frontend (SIEMPRE AL FINAL)
+    // 🔹 Respuesta final
     res.status(200).json({
       init_point: data.init_point
     });
