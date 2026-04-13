@@ -1,3 +1,42 @@
+async function crearEnvioShipit(dataCliente) {
+  const response = await fetch('https://api.shipit.cl/v2/shipments', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.SHIPIT_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      reference: `pedido-${Date.now()}`,
+      items: [{
+        size: "S",
+        weight: 1
+      }],
+      destiny: {
+        name: dataCliente.nombre,
+        email: dataCliente.email,
+        phone: dataCliente.telefono,
+        street: dataCliente.direccion,
+        number: dataCliente.numero || "0",
+        commune: dataCliente.comuna
+      },
+      origin: {
+        name: "Dicontal",
+        email: "TU_EMAIL",
+        phone: "TU_TELEFONO",
+        street: "Chiloé",
+        number: "1268",
+        commune: "Santiago"
+      }
+    })
+  });
+
+  const result = await response.json();
+  console.log("🚚 SHIPIT:", result);
+
+  return result;
+}
+
+//cambio 13.4.26 el de arriba
 module.exports = async function handler(req, res) {
 
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -26,6 +65,15 @@ module.exports = async function handler(req, res) {
       giro,
       direccion_empresa
     } = body;
+    // 🚚 Crear envío en Shipit (prueba)
+const envio = await crearEnvioShipit({
+  nombre,
+  email,
+  telefono,
+  direccion,
+  numero: "0",
+  comuna
+});
 
     // 🔹 Crear pago en Mercado Pago
     const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
