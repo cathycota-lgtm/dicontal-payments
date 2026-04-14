@@ -55,8 +55,9 @@ if (!response.ok) {
     const data = await response.json();
 
     // 🔹 Armar detalle (soporta múltiples productos)
-    const detalle = items?.map(i => `${i.title} x ${i.quantity}`).join("<br>") || "Sin detalle";
+  const detalle = items?.map(i => `${i.title} x ${i.quantity}`).join("<br>") || "Sin detalle";
 
+const total = items.reduce((acc, i) => acc + (i.unit_price * i.quantity), 0);
     // 🔹 Enviar email
     console.log("📩 intentando enviar email...");
 
