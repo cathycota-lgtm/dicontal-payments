@@ -97,7 +97,7 @@ if (!response.ok) {
             <hr>
 
             <p><strong>Detalle:</strong><br>${detalle}</p>
-            <p><strong>Total:</strong> $${items[0]?.unit_price}</p>
+            <p><strong>Total:</strong> $${total}</p>
           `
         })
       });
