@@ -27,21 +27,10 @@ async function crearEnvioShipit(dataCliente) {
     })
   });
 
- const text = await response.text();
+  const result = await response.json();
+  console.log("🚚 SHIPIT:", result);
 
-console.log("🚚 STATUS:", response.status);
-console.log("🚚 RAW:", text);
-
-let result;
-
-try {
-  result = JSON.parse(text);
-} catch (e) {
-  console.log("⚠️ No es JSON válido");
-  result = text;
-}
-
-return result;
+  return result;
 }
 
 module.exports = async function handler(req, res) {
