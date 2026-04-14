@@ -27,6 +27,15 @@ console.log("BODY:", body);
       giro,
       direccion_empresa
     } = body;
+  
+// ✅ VALIDACIONES
+if (!items || items.length === 0) {
+  return res.status(400).json({ error: "No hay productos en el pedido" });
+}
+
+if (!nombre || !email) {
+  return res.status(400).json({ error: "Faltan datos del cliente" });
+}
       // 🔹 Crear pago en Mercado Pago
     const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -38,7 +47,11 @@ console.log("BODY:", body);
         items: items
       })
     });
-
+if (!response.ok) {
+  const errorText = await response.text();
+  console.error("❌ MP error:", errorText);
+  return res.status(500).json({ error: "Error en Mercado Pago" });
+}
     const data = await response.json();
 
     // 🔹 Armar detalle (soporta múltiples productos)
