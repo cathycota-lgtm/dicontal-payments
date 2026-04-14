@@ -11,7 +11,8 @@ module.exports = async function handler(req, res) {
   try {
 
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-
+    // console.log("BODY:", body);
+console.log("BODY:", body);
     const {
       items,
       nombre,
