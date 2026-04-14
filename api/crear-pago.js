@@ -150,12 +150,11 @@ module.exports = async function handler(req, res) {
 
   } catch (error) {
 
-    console.error("❌ error general:", error);
+    console.error("❌ ERROR REAL:", error);
 
-    res.status(500).json({
-      error: "Error creando pago"
-    });
-
+res.status(500).json({
+  error: error.message || "Error creando pago"
+});
   }
 
 }
