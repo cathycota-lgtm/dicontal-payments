@@ -6,7 +6,7 @@ module.exports = async function handler(req, res) {
 
     let body = req.body;
 
-    // intentar parsear si viene como string
+    // Intentar parsear si viene como string
     if (typeof body === "string") {
       try {
         body = JSON.parse(body);
@@ -17,12 +17,13 @@ module.exports = async function handler(req, res) {
 
     console.log("📦 Body:", body);
 
+    // MUY IMPORTANTE: responder 200 siempre
     return res.status(200).json({ ok: true });
 
   } catch (error) {
     console.error("❌ Error webhook:", error);
 
-    // 👇 IMPORTANTE: igual devolver 200 para que MP no falle
+    // Aunque falle, responder 200 para que MP no reintente
     return res.status(200).json({ error: "handled" });
   }
 
