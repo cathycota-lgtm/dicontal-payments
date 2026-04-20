@@ -6,6 +6,7 @@ module.exports = async function handler(req, res) {
 
     let body = req.body;
 
+    // Parsear si viene como string
     if (typeof body === "string") {
       try {
         body = JSON.parse(body);
@@ -16,7 +17,7 @@ module.exports = async function handler(req, res) {
 
     console.log("📦 Body:", body);
 
-    // 🟡 SOLO si es merchant_order
+    // Solo procesar merchant_order
     if (body?.topic === "merchant_order" && body?.resource) {
 
       console.log("🔎 Consultando merchant_order...");
@@ -32,7 +33,6 @@ module.exports = async function handler(req, res) {
 
       console.log("📦 Merchant Order:", JSON.stringify(data, null, 2));
 
-      // 🔍 Buscar pagos dentro
       const payments = data.payments || [];
 
       if (payments.length === 0) {
@@ -44,51 +44,62 @@ module.exports = async function handler(req, res) {
         console.log("💰 Payment:", payment.id);
         console.log("📊 Status:", payment.status);
 
-       if (payment.status === "approved") {
+        // 👉 SOLO cuando está aprobado
+        if (payment.status === "approved") {
 
-  console.log("✅ PAGO APROBADO");
+          console.log("✅ PAGO APROBADO");
 
-  try {
+          // 🛑 evitar duplicados (básico)
+          global.processedPayments = global.processedPayments || [];
 
-    const emailRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        from: "onboarding@resend.dev",
-        to: "cathycota@gmail.com",
-        subject: "✅ Pago confirmado - Nuevo pedido",
-        html: `
-          <h2>Pago confirmado</h2>
+          if (global.processedPayments.includes(payment.id)) {
+            console.log("⚠️ Pago ya procesado, se omite");
+            continue;
+          }
 
-          <p><strong>ID de pago:</strong> ${payment.id}</p>
-          <p><strong>Monto:</strong> $${payment.transaction_amount}</p>
+          global.processedPayments.push(payment.id);
 
-          <hr>
+          try {
 
-          <p>Este pedido ya fue pagado correctamente en Mercado Pago.</p>
-        `
-      })
-    });
+            const emailRes = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                from: "onboarding@resend.dev",
+                to: "cathycota@gmail.com",
+                subject: "✅ Pago confirmado - Nuevo pedido",
+                html: `
+                  <h2>Pago confirmado</h2>
 
-    const emailData = await emailRes.text();
+                  <p><strong>ID de pago:</strong> ${payment.id}</p>
+                  <p><strong>Monto:</strong> $${payment.transaction_amount}</p>
 
-    if (!emailRes.ok) {
-      console.error("❌ Resend error:", emailData);
-    } else {
-      console.log("📩 Email enviado correctamente");
-    }
+                  <hr>
 
-  } catch (err) {
-    console.error("❌ error enviando email:", err);
-  }
+                  <p>Este pedido ya fue pagado correctamente en Mercado Pago.</p>
+                `
+              })
+            });
 
-}
+            const emailData = await emailRes.text();
+
+            if (!emailRes.ok) {
+              console.error("❌ Resend error:", emailData);
+            } else {
+              console.log("📩 Email enviado correctamente");
+            }
+
+          } catch (err) {
+            console.error("❌ error enviando email:", err);
+          }
+
         }
 
       }
+
     }
 
     return res.status(200).json({ ok: true });
