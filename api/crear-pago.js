@@ -44,8 +44,9 @@ if (!nombre || !email) {
         "Authorization": `Bearer ${process.env.MP_ACCESS_TOKEN}`
       },
       body: JSON.stringify({
-        items: items
-      })
+  items: items,
+  notification_url: "https://dicontal-payments.vercel.app/api/webhook-mercadopago"
+})
     });
 if (!response.ok) {
   const errorText = await response.text();
