@@ -43,9 +43,17 @@ if (!nombre || !email) {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.MP_ACCESS_TOKEN}`
       },
-      body: JSON.stringify({
+     body: JSON.stringify({
   items: items,
-  notification_url: "https://dicontal-payments.vercel.app/api/webhook-mercadopago"
+  notification_url: "https://dicontal-payments.vercel.app/api/webhook-mercadopago",
+
+  back_urls: {
+    success: "https://dicontal.cl/gracias",
+    failure: "https://dicontal.cl/error",
+    pending: "https://dicontal.cl/pendiente"
+  },
+
+  auto_return: "approved"
 })
     });
 if (!response.ok) {
