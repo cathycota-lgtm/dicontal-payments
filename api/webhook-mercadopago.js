@@ -44,12 +44,48 @@ module.exports = async function handler(req, res) {
         console.log("💰 Payment:", payment.id);
         console.log("📊 Status:", payment.status);
 
-        if (payment.status === "approved") {
-          console.log("✅ PAGO APROBADO");
+       if (payment.status === "approved") {
 
-          // 👉 AQUÍ después:
-          // enviar email correcto
-          // marcar pedido como pagado
+  console.log("✅ PAGO APROBADO");
+
+  try {
+
+    const emailRes = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from: "onboarding@resend.dev",
+        to: "cathycota@gmail.com",
+        subject: "✅ Pago confirmado - Nuevo pedido",
+        html: `
+          <h2>Pago confirmado</h2>
+
+          <p><strong>ID de pago:</strong> ${payment.id}</p>
+          <p><strong>Monto:</strong> $${payment.transaction_amount}</p>
+
+          <hr>
+
+          <p>Este pedido ya fue pagado correctamente en Mercado Pago.</p>
+        `
+      })
+    });
+
+    const emailData = await emailRes.text();
+
+    if (!emailRes.ok) {
+      console.error("❌ Resend error:", emailData);
+    } else {
+      console.log("📩 Email enviado correctamente");
+    }
+
+  } catch (err) {
+    console.error("❌ error enviando email:", err);
+  }
+
+}
         }
 
       }
