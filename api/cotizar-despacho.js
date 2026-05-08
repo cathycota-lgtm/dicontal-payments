@@ -106,8 +106,11 @@ console.log("🔑 Token disponible:", !!CC_TOKEN);
       comunaDestino: comunaDestino.toUpperCase()
     });
 
-  } catch (error) {
-    console.error("❌ Error general cotizar-despacho:", error);
-    return res.status(500).json({ error: "Error interno al calcular el despacho" });
-  }
+ } catch (error) {
+    return res.status(500).json({ 
+        error: "Error interno al calcular el despacho",
+        detalle: error.message,
+        tipo: error.name
+    });
+}
 };
