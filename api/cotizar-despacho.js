@@ -67,11 +67,15 @@ console.log("🔑 Token disponible:", !!CC_TOKEN);
       })
     });
 
-    if (!ccResponse.ok) {
-      const errorText = await ccResponse.text();
-      console.error("❌ Error Correos Chile:", errorText);
-      return res.status(500).json({ error: "Error consultando tarifas de Correos de Chile" });
-    }
+   if (!ccResponse.ok) {
+  const errorText = await ccResponse.text();
+  return res.status(500).json({ 
+    error: "Error Correos Chile", 
+    detalle: errorText,
+    token: !!CC_TOKEN,
+    status: ccResponse.status
+  });
+}
 
     const tarifas = await ccResponse.json();
     console.log("✅ Tarifas recibidas:", tarifas);
