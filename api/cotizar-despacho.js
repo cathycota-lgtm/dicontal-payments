@@ -48,7 +48,7 @@ module.exports = async function handler(req, res) {
     // https://apib2bv2.correos.cl/tarifas
    const CC_URL = "https://apib2bv2.correos.cl/tarifas";
     const CC_TOKEN = process.env.CC_TOKEN; // Guardar en variables de entorno Vercel
-
+console.log("🔑 Token disponible:", !!CC_TOKEN);
     const ccResponse = await fetch(CC_URL, {
       method: "POST",
       headers: {
