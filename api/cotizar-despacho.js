@@ -11,38 +11,16 @@ export default async function handler(req, res) {
         "X-Shipit-Access-Token": process.env.SHIPIT_TOKEN
       },
       body: JSON.stringify({
-        shipment: {
-          kind: 0,
-          platform: 2,
-          reference: "TEST-DICONTAL",
-          items: 1,
-          sizes: {
-            width: 10,
-            height: 10,
-            length: 10,
-            weight: 1
-          },
-          courier: {
-            client: "chilexpress"
-          },
-          destiny: {
-            street: "Providencia",
-            number: "100",
-            complement: "",
-            commune_id: 308,
-            commune_name: "LAS CONDES",
-            full_name: "Cathy",
-            email: "cathycota@gmail.com",
-            phone: "999999999",
-            kind: "home_delivery"
-          },
-          insurance: {
-            ticket_amount: 0,
-            ticket_number: "",
-            price: 0,
-            detail: null,
-            extra: false
-          }
+        parcel: {
+          length: 10,
+          width: 10,
+          height: 10,
+          weight: 1,
+          origin_id: 308,
+          destiny_id: 308,
+          type_of_destiny: "domicilio",
+          algorithm: "1",
+          algorithm_days: "2"
         }
       })
     });
