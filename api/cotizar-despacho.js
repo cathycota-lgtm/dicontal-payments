@@ -22,23 +22,22 @@ export default async function handler(req, res) {
       })
     });
 
-    const data = await response.json();
+    const raw = await response.text();
 
     return res.status(200).json({
       ok: true,
       status: response.status,
-      data
+      raw
     });
 
   } catch (error) {
 
     return res.status(500).json({
       ok: false,
-      error: error.message
+      error: error.message,
+      stack: error.stack
     });
 
   }
-
-}
 
 }
