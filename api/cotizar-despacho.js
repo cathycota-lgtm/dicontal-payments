@@ -22,10 +22,10 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         parcel: {
-          length: 10,
-          width: 10,
-          height: 10,
-          weight: 1,
+          length: 65,
+          width: 84,
+          height: 5,
+          weight: 6,
           origin_id: 308,
           destiny_id: req.body.commune_id,
           type_of_destiny: "domicilio",
