@@ -2,25 +2,36 @@ export default async function handler(req, res) {
 
   try {
 
-    const response = await fetch("https://api.shipit.cl/v/communes", {
-      method: "GET",
+    const response = await fetch("https://api.shipit.cl/v/rates", {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/vnd.shipit.v4",
         "X-Shipit-Email": process.env.SHIPIT_EMAIL,
         "X-Shipit-Access-Token": process.env.SHIPIT_TOKEN
-      }
+      },
+      body: JSON.stringify({
+        parcel: {
+          length: 10,
+          width: 10,
+          height: 10,
+          weight: 1,
+          origin_id: 308,
+          destiny_id: 308,
+          type_of_destiny: "domicilio",
+          algorithm: "1",
+          algorithm_days: "2"
+        }
+      })
     });
 
-    const data = await response.json();
+    const raw = await response.text();
 
-    const simplified = data.map(commune => ({
-  id: commune.id,
-  name: commune.name,
-  region: commune.region_name
-}));
-
-return res.status(200).json(simplified);
+    return res.status(200).json({
+      ok: true,
+      status: response.status,
+      raw
+    });
 
   } catch (error) {
 
