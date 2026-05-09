@@ -6,14 +6,12 @@ export default async function handler(req, res) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/vnd.shipit.v3",
+        "Accept": "application/vnd.shipit.v4",
         "X-Shipit-Email": process.env.SHIPIT_EMAIL,
         "X-Shipit-Access-Token": process.env.SHIPIT_TOKEN
       },
       body: JSON.stringify({
-        origin_id: 1,
-        destiny_id: 308,
-        package: {
+        parcel: {
           length: 20,
           width: 20,
           height: 10,
@@ -34,8 +32,7 @@ export default async function handler(req, res) {
 
     return res.status(500).json({
       ok: false,
-      error: error.message,
-      stack: error.stack
+      error: error.message
     });
 
   }
