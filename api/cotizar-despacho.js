@@ -14,7 +14,13 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    return res.status(200).json(data);
+    const simplified = data.map(commune => ({
+  id: commune.id,
+  name: commune.name,
+  region: commune.region_name
+}));
+
+return res.status(200).json(simplified);
 
   } catch (error) {
 
