@@ -11,30 +11,23 @@ export default async function handler(req, res) {
         "X-Shipit-Access-Token": process.env.SHIPIT_TOKEN
       },
       body: JSON.stringify({
+        origin_id: 1,
+        destiny_id: 308,
         package: {
           length: 20,
           width: 20,
           height: 10,
-          weight: 1,
-          destiny: {
-            commune_id: 308
-          }
+          weight: 1
         }
       })
     });
 
-  const data = await response.json();
-
-return res.status(200).json({
-  ok: true,
-  status: response.status,
-  data
-});
+    const data = await response.json();
 
     return res.status(200).json({
       ok: true,
       status: response.status,
-      response: text
+      data
     });
 
   } catch (error) {
@@ -45,5 +38,7 @@ return res.status(200).json({
     });
 
   }
+
+}
 
 }
