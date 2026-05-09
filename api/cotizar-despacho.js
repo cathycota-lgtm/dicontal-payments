@@ -1,5 +1,8 @@
 export default async function handler(req, res) {
+
   try {
+
+    console.log("Iniciando test Shipit");
 
     const response = await fetch("https://api.shipit.cl/v/quotes", {
       method: "POST",
@@ -19,21 +22,29 @@ export default async function handler(req, res) {
       })
     });
 
-    const data = await response.json();
+    console.log("Status:", response.status);
 
-    res.status(200).json({
+    const text = await response.text();
+
+    console.log("Respuesta:", text);
+
+    return res.status(200).json({
       ok: true,
       status: response.status,
-      data
+      response: text
     });
 
   } catch (error) {
 
-    res.status(500).json({
+    console.error("ERROR REAL:", error);
+
+    return res.status(500).json({
       ok: false,
-      error: error.message
+      error: String(error),
+      message: error.message,
+      stack: error.stack
     });
 
   }
+
 }
-};
