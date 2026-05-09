@@ -11,14 +11,19 @@ export default async function handler(req, res) {
         "X-Shipit-Access-Token": process.env.SHIPIT_TOKEN
       },
       body: JSON.stringify({
-        parcel: {
-          length: 20,
-          width: 20,
-          height: 10,
-          weight: 1
-        }
-      })
-    });
+  parcel: {
+    length: 20,
+    width: 20,
+    height: 10,
+    weight: 1,
+    destiny: {
+      street: "Providencia",
+      number: "100",
+      commune_id: 308,
+      city: "Santiago"
+    }
+  }
+})
 
     const raw = await response.text();
 
