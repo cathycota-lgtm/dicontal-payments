@@ -17,7 +17,7 @@ export default async function handler(req, res) {
           height: 10,
           weight: 1,
           origin_id: 308,
-          destiny_id: 308,
+         destiny_id: req.body.commune_id,
           type_of_destiny: "domicilio",
           algorithm: "1",
           algorithm_days: "2"
