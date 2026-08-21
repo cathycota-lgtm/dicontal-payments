@@ -1,0 +1,7 @@
+{
+  "name": "dicontal-payments",
+  "version": "1.0.0",
+  "dependencies": {
+    "transbank-sdk": "^4.0.0"
+  }
+}
