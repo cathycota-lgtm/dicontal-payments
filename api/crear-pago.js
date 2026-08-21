@@ -1,44 +1,142 @@
-const { WebpayPlus, Options, Environment, IntegrationCommerceCodes, IntegrationApiKeys } = require('transbank-sdk');
+module.exports = async function handler(req, res) {
 
-module.exports = async (req, res) => {
-  // Configuración de cabeceras CORS para permitir consultas desde dicontal.cl
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Responder a la verificación previa del navegador (preflight)
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+  if (req.method === "OPTIONS") {
+    return res.status(200).json({});
   }
-
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
   try {
-    const { amount, buyOrder, sessionId } = req.body;
 
-    const tx = new WebpayPlus.Transaction(
-      new Options(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, Environment.Integration)
-    );
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    // console.log("BODY:", body);
+console.log("BODY:", body);
+    const {
+      items,
+      nombre,
+      email,
+      telefono,
+      comuna,
+      direccion,
+      tipo_documento,
+      tipo_entrega, // 👈 agregado
+      razon_social,
+      rut,
+      giro,
+      direccion_empresa
+    } = body;
+  
+// ✅ VALIDACIONES
+if (!items || items.length === 0) {
+  return res.status(400).json({ error: "No hay productos en el pedido" });
+}
 
-    const host = req.headers['x-forwarded-host'] || req.headers.host;
-    const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const returnUrl = `${protocol}://${host}/api/webpay-commit`;
+if (!nombre || !email) {
+  return res.status(400).json({ error: "Faltan datos del cliente" });
+}
+      // 🔹 Crear pago en Mercado Pago
+    const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.MP_ACCESS_TOKEN}`
+      },
+     body: JSON.stringify({
+  items: items,
+  notification_url: "https://dicontal-payments.vercel.app/api/webhook-mercadopago",
 
-    const response = await tx.create(
-      buyOrder || 'ORDEN-' + Date.now(),
-      sessionId || 'SESION-' + Date.now(),
-      amount,
-      returnUrl
-    );
+  back_urls: {
+    success: "https://dicontal.cl/gracias",
+    failure: "https://dicontal.cl/error",
+    pending: "https://dicontal.cl/pendiente"
+  },
 
-    res.status(200).json(response);
+  auto_return: "approved"
+})
+    });
+if (!response.ok) {
+  const errorText = await response.text();
+  console.error("❌ MP error:", errorText);
+  return res.status(500).json({ error: "Error en Mercado Pago" });
+}
+    const data = await response.json();
+
+    // 🔹 Armar detalle (soporta múltiples productos)
+  const detalle = items?.map(i => `${i.title} x ${i.quantity}`).join("<br>") || "Sin detalle";
+
+const total = items.reduce((acc, i) => acc + (i.unit_price * i.quantity), 0);
+    // 🔹 Enviar email
+    console.log("📩 intentando enviar email...");
+
+    try {
+      const emailRes = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          from: "onboarding@resend.dev",
+          to: "cathycota@gmail.com",
+          subject: "Nuevo pedido web",
+          html: `
+            <h2>Nuevo pedido</h2>
+
+            <p><strong>Nombre:</strong> ${nombre}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Teléfono:</strong> ${telefono}</p>
+            <p><strong>Comuna:</strong> ${comuna}</p>
+            <p><strong>Dirección:</strong> ${direccion}</p>
+
+            <p><strong>Entrega:</strong> ${tipo_entrega || "No especificado"}</p>
+
+            <hr>
+
+            <p><strong>Tipo documento:</strong> ${tipo_documento || "boleta"}</p>
+
+            ${tipo_documento === "factura" ? `
+              <h3>Datos de facturación</h3>
+              <p><strong>Razón social:</strong> ${razon_social}</p>
+              <p><strong>RUT:</strong> ${rut}</p>
+              <p><strong>Giro:</strong> ${giro}</p>
+              <p><strong>Dirección empresa:</strong> ${direccion_empresa}</p>
+            ` : ""}
+
+            <hr>
+
+            <p><strong>Detalle:</strong><br>${detalle}</p>
+            <p><strong>Total:</strong> $${total}</p>
+          `
+        })
+      });
+
+      const emailData = await emailRes.text();
+
+      if (!emailRes.ok) {
+        console.error("❌ Resend error:", emailData);
+      }
+
+      console.log("📩 respuesta resend:", emailData);
+
+    } catch (err) {
+      console.error("❌ error enviando email:", err);
+    }
+
+    // 🔹 Respuesta final
+    res.status(200).json({
+      init_point: data.init_point
+    });
+
   } catch (error) {
-    console.error("Error al crear transacción Webpay:", error);
-    res.status(500).json({ error: error.message });
+
+    console.error("❌ error general:", error);
+
+    res.status(500).json({
+      error: "Error creando pago"
+    });
+
   }
-};
+
+}
