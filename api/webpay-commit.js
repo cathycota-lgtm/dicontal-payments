@@ -16,9 +16,16 @@ module.exports = async (req, res) => {
       return res.redirect('https://www.dicontal.cl/pago-cancelado');
     }
 
-    // Inicializar Transbank SDK
+    // Carga dinámica según las variables de entorno de Vercel
+    const commerceCode = process.env.WEBPAY_COMMERCE_CODE || IntegrationCommerceCodes.WEBPAY_PLUS;
+    const apiKey = process.env.WEBPAY_API_KEY || IntegrationApiKeys.WEBPAY;
+    const environment = process.env.WEBPAY_ENVIRONMENT === 'production' 
+      ? Environment.Production 
+      : Environment.Integration;
+
+    // Inicializar Transbank SDK con credenciales de producción/integración
     const tx = new WebpayPlus.Transaction(
-      new Options(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, Environment.Integration)
+      new Options(commerceCode, apiKey, environment)
     );
 
     // Confirmar la transacción con el token
