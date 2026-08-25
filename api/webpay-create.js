@@ -21,8 +21,15 @@ module.exports = async (req, res) => {
   try {
     const { amount, buyOrder, sessionId } = req.body;
 
+    // Carga dinámica según las variables de entorno de Vercel
+    const commerceCode = process.env.WEBPAY_COMMERCE_CODE || IntegrationCommerceCodes.WEBPAY_PLUS;
+    const apiKey = process.env.WEBPAY_API_KEY || IntegrationApiKeys.WEBPAY;
+    const environment = process.env.WEBPAY_ENVIRONMENT === 'production' 
+      ? Environment.Production 
+      : Environment.Integration;
+
     const tx = new WebpayPlus.Transaction(
-      new Options(IntegrationCommerceCodes.WEBPAY_PLUS, IntegrationApiKeys.WEBPAY, Environment.Integration)
+      new Options(commerceCode, apiKey, environment)
     );
 
     const host = req.headers['x-forwarded-host'] || req.headers.host;
