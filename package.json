@@ -1,7 +1,9 @@
 {
   "name": "dicontal-payments",
   "version": "1.0.0",
+  "type": "commonjs",
   "dependencies": {
-    "transbank-sdk": "^4.0.0"
+    "transbank-sdk": "^4.0.0",
+    "resend": "^3.0.0"
   }
 }
