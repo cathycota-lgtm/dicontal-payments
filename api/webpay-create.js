@@ -1,7 +1,15 @@
 const { WebpayPlus, Options, Environment, IntegrationCommerceCodes, IntegrationApiKeys } = require('transbank-sdk');
 const { Resend } = require('resend');
+const { Redis } = require('@upstash/redis');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+function getRedis() {
+  const url = process.env.KV_REST_API_URL || process.env.STORAGE_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.STORAGE_REST_API_TOKEN;
+  if (!url || !token) return null;
+  return new Redis({ url, token });
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -57,12 +65,32 @@ module.exports = async (req, res) => {
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const returnUrl = `${protocol}://${host}/api/webpay-commit`;
 
+    const finalBuyOrder = buyOrder || 'ORDEN-' + Date.now();
+    const finalSessionId = sessionId || 'SESION-' + Date.now();
+
     const response = await tx.create(
-      buyOrder || 'ORDEN-' + Date.now(),
-      sessionId || 'SESION-' + Date.now(),
+      finalBuyOrder,
+      finalSessionId,
       amount,
       returnUrl
     );
+
+    // Guardar datos temporales para Meta. Un fallo aquí no interrumpe Webpay.
+    try {
+      const redis = getRedis();
+      if (redis && cliente?.email) {
+        await redis.set(
+          `meta-order:${finalBuyOrder}`,
+          {
+            email: cliente.email,
+            userAgent: req.headers['user-agent'] || ''
+          },
+          { ex: 86400 }
+        );
+      }
+    } catch (redisError) {
+      console.error("Error guardando datos temporales para Meta:", redisError);
+    }
 
     res.status(200).json(response);
   } catch (error) {
