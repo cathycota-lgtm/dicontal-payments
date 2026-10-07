@@ -53,8 +53,7 @@ async function sendMetaPurchase(response) {
         currency: 'CLP',
         value: Number(response.amount)
       }
-    }],
-    test_event_code: 'TEST24252'
+    }]
   };
 
   const metaResponse = await fetch(
