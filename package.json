@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "commonjs",
   "dependencies": {
+    "@upstash/redis": "^1.35.3",
     "transbank-sdk": "^4.0.0",
     "resend": "^3.0.0"
   }
