@@ -33,6 +33,7 @@ module.exports = async (req, res) => {
           html: `
             <h3>Nuevo Formulario de Compra - DICONTAL</h3>
             <p><strong>Cliente:</strong> ${cliente.nombre}</p>
+            ${cliente.tipo_documento === 'boleta' ? `<p><strong>RUT comprador:</strong> ${cliente.rut || 'No informado'}</p>` : ''}
             <p><strong>Email:</strong> ${cliente.email}</p>
             <p><strong>Teléfono:</strong> ${cliente.telefono}</p>
             <p><strong>Entrega:</strong> ${cliente.tipo_entrega}</p>
