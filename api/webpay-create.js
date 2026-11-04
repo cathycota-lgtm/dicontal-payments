@@ -93,6 +93,29 @@ module.exports = async (req, res) => {
       console.error("Error guardando datos temporales para Meta:", redisError);
     }
 
+
+    // Vincular los datos del comprador al token de esta transacción durante 7 días.
+    // Un fallo de almacenamiento no cambia la respuesta de Webpay.
+    try {
+      const redis = getRedis();
+      if (!redis) throw new Error('Almacenamiento de pedidos no configurado');
+      if (response.token && cliente?.email) {
+        const tokenHash = require('crypto').createHash('sha256').update(response.token).digest('hex');
+        await redis.set(`customer-order:${tokenHash}`, {
+          buyOrder: finalBuyOrder,
+          amount: Number(amount),
+          nombre: String(cliente.nombre || ''),
+          email: String(cliente.email).trim(),
+          detalle: String(cliente.detalle || ''),
+          tipo_entrega: cliente.tipo_entrega === 'despacho' ? 'despacho' : 'retiro',
+          direccion: String(cliente.direccion || ''),
+          emailSent: false
+        }, { ex: 604800 });
+      }
+    } catch (orderError) {
+      console.error('No se guardó el pedido para confirmación al comprador:', orderError.message);
+    }
+
     res.status(200).json(response);
   } catch (error) {
     console.error("Error en webpay-create:", error);

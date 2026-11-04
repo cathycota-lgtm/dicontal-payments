@@ -79,6 +79,71 @@ async function sendMetaPurchase(response) {
   }
 }
 
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[char]));
+}
+
+async function sendCustomerConfirmation(token, response) {
+  const redis = getRedis();
+  if (!redis) throw new Error('Almacenamiento de pedidos no configurado');
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const key = `customer-order:${tokenHash}`;
+  const order = await redis.get(key);
+  if (!order) throw new Error('No se encontró el pedido para confirmación');
+  if (order.emailSent) return;
+  if (order.buyOrder !== response.buy_order || Number(order.amount) !== Number(response.amount)) {
+    throw new Error('El pedido guardado no coincide con el pago aprobado');
+  }
+  const amount = '$' + Number(response.amount).toLocaleString('es-CL') + ' CLP';
+  const delivery = order.tipo_entrega === 'despacho'
+    ? 'Despacho a: ' + order.direccion + '. Te contactaremos para coordinar la entrega.'
+    : 'Retiro en Chiloé 1268, Santiago. Te avisaremos cuando tu pedido esté listo para retirar.';
+  const text = [
+    'Hola ' + order.nombre + ',',
+    'Confirmamos que recibimos tu pago en Dicontal.',
+    'Número de pedido: ' + response.buy_order,
+    'Productos: ' + order.detalle,
+    'Total pagado: ' + amount,
+    delivery,
+    'Si tienes alguna consulta, responde a este correo o escríbenos al +56 9 8232 4044.',
+    'Gracias por tu compra.',
+    'Dicontal'
+  ].join('\n\n');
+  const emailResponse = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    signal: AbortSignal.timeout(8000),
+    headers: {
+      Authorization: 'Bearer ' + process.env.RESEND_API_KEY,
+      'Content-Type': 'application/json',
+      'Idempotency-Key': 'customer-confirmation/' + tokenHash
+    },
+    body: JSON.stringify({
+      from: 'Dicontal <compras@notificaciones.dicontal.cl>',
+      to: [order.email],
+      reply_to: 'ventas@dicontal.cl',
+      subject: 'Confirmación de compra Dicontal — Pedido ' + response.buy_order,
+      text,
+      html: `<div style="font-family:Arial,sans-serif;max-width:600px;color:#222;line-height:1.6">
+        <h1 style="font-size:24px">Gracias por tu compra</h1>
+        <p>Hola ${escapeHtml(order.nombre)}, confirmamos que recibimos tu pago en Dicontal.</p>
+        <p><strong>Número de pedido:</strong> ${escapeHtml(response.buy_order)}</p>
+        <p><strong>Productos:</strong> ${escapeHtml(order.detalle)}</p>
+        <p><strong>Total pagado:</strong> ${escapeHtml(amount)}</p>
+        <p>${escapeHtml(delivery)}</p>
+        <p>Si tienes alguna consulta, responde a este correo o escríbenos al +56 9 8232 4044.</p>
+        <p>Dicontal · Chiloé 1268, Santiago</p>
+      </div>`
+    })
+  });
+  if (!emailResponse.ok) throw new Error('Resend rechazó la confirmación: HTTP ' + emailResponse.status);
+  const sent = await emailResponse.json();
+  if (!sent.id) throw new Error('Resend no devolvió identificador del correo');
+  await redis.set(key, { ...order, emailSent: true, emailId: sent.id }, { ex: 604800 });
+}
+
 module.exports = async (req, res) => {
   try {
     let token = req.body?.token_ws || req.query?.token_ws;
@@ -115,6 +180,13 @@ module.exports = async (req, res) => {
         });
       } catch (eError) {
         console.error("Error enviando Correo #2:", eError);
+      }
+
+      // Un error de correo no cambia el resultado del pago.
+      try {
+        await sendCustomerConfirmation(token, response);
+      } catch (customerError) {
+        console.error('Confirmación al comprador pendiente:', customerError.message);
       }
 
       // El pago ya está autorizado. Meta no puede cambiar el resultado de Webpay.
