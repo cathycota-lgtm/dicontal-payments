@@ -27,9 +27,9 @@ module.exports = async (req, res) => {
     // CORREO #1: FORMULARIO DE COMPRA
     if (cliente) {
       try {
-        await resend.emails.send({
-          from: 'onboarding@resend.dev',
-          to: 'cathycota@gmail.com',
+        const { error } = await resend.emails.send({
+          from: 'Dicontal <compras@notificaciones.dicontal.cl>',
+          to: 'ventas@dicontal.cl',
           subject: `[Intento de Pago] Webpay - Orden #${finalBuyOrder}`,
           html: `
             <h3>Nuevo Formulario de Compra - DICONTAL</h3>
@@ -51,6 +51,7 @@ module.exports = async (req, res) => {
             <p><strong>Monto Total:</strong> $${amount} CLP</p>
           `
         });
+        if (error) throw new Error(error.message);
       } catch (eError) {
         console.error("Error enviando Correo #1:", eError);
       }
