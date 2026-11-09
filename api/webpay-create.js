@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
       try {
         const { error } = await resend.emails.send({
           from: 'Dicontal <compras@notificaciones.dicontal.cl>',
-          to: 'ventas@dicontal.cl',
+          to: 'ccorrea@dicontal.cl',
           subject: `[Intento de Pago] Webpay - Orden #${finalBuyOrder}`,
           html: `
             <h3>Nuevo Formulario de Compra - DICONTAL</h3>
