@@ -165,9 +165,9 @@ module.exports = async (req, res) => {
       
       // CORREO #2: PAGO CONFIRMADO
       try {
-        await resend.emails.send({
-          from: 'onboarding@resend.dev',
-          to: 'cathycota@gmail.com',
+        const { error } = await resend.emails.send({
+          from: 'Dicontal <compras@notificaciones.dicontal.cl>',
+          to: 'ventas@dicontal.cl',
           subject: `[PAGO CONFIRMADO] Webpay - Orden #${response.buy_order}`,
           html: `
             <h2>¡Pago Aprobado en DICONTAL!</h2>
@@ -178,6 +178,7 @@ module.exports = async (req, res) => {
             <p><strong>Fecha/Hora:</strong> ${new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' })}</p>
           `
         });
+        if (error) throw new Error(error.message);
       } catch (eError) {
         console.error("Error enviando Correo #2:", eError);
       }
